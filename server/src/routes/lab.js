@@ -7,6 +7,7 @@ import { Patient } from '../models/Patient.js';
 import { audit } from '../models/AuditLog.js';
 import { authenticate, authorize } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
+import { notifyPatient } from '../services/notifications.js';
 import { ageInYears, deriveOrderStatus, flagResult, pickRange } from '../services/lab.js';
 import { asyncHandler, badRequest, conflict, forbidden, notFound } from '../utils/errors.js';
 
@@ -155,6 +156,7 @@ router.post('/orders/:id/review', authorize('lab:review'), validate(z.object({ n
   order.reviewNotes = req.body.notes;
   await order.save();
   audit(req, 'lab.order.review', 'LabOrder', order.id);
+  await notifyPatient(req.user.clinic, order.patient, 'lab_report_ready', {}, String(order._id));
   res.json(order);
 }));
 

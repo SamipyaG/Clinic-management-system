@@ -136,3 +136,25 @@ test('age and lab order status', async () => {
   assert.equal(deriveOrderStatus(['resulted', 'ordered']), 'in_progress');
   assert.equal(deriveOrderStatus(['resulted', 'resulted']), 'completed');
 });
+
+test('notification templates, channels, reminders, backoff', async () => {
+  const core = await import('../src/services/notifyCore.js');
+  assert.match(core.render('appointment_confirmed', { name: 'Ana', doctor: 'Who', when: 'Mon' }).body, /Ana.*Who.*Mon/);
+  assert.throws(() => core.render('nope', {}));
+
+  const patient = { email: 'a@x.com', phone: '98', user: 'u1' };
+  assert.deepEqual(
+    core.channelsFor(patient, ['email', 'sms', 'whatsapp', 'in_app']).map((c) => c.channel),
+    ['email', 'sms', 'whatsapp', 'in_app'],
+  );
+  assert.deepEqual(core.channelsFor({ phone: '98' }, ['email', 'sms', 'in_app']).map((c) => c.channel), ['sms']);
+
+  const now = new Date('2026-06-01T10:00:00Z');
+  assert.equal(core.reminderTimes(new Date('2026-06-03T10:00:00Z'), now).length, 2);
+  assert.equal(core.reminderTimes(new Date('2026-06-01T20:00:00Z'), now).length, 1); // only the 2h one is still ahead
+  assert.equal(core.reminderTimes(new Date('2026-06-01T11:00:00Z'), now).length, 0);
+
+  assert.equal(core.retryDelayMs(1), 60_000);
+  assert.equal(core.retryDelayMs(3), 240_000);
+  assert.equal(core.retryDelayMs(30), 3_600_000);
+});

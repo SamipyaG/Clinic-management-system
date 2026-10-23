@@ -18,6 +18,11 @@ import pharmacyRoutes from './routes/pharmacy.js';
 import inventoryRoutes from './routes/inventory.js';
 import billingRoutes from './routes/billing.js';
 import expenseRoutes from './routes/expenses.js';
+import reportRoutes from './routes/reports.js';
+import notificationRoutes from './routes/notifications.js';
+import portalRoutes from './routes/portal.js';
+import publicRoutes from './routes/public.js';
+import adminRoutes from './routes/users.js';
 
 export const createApp = () => {
   const app = express();
@@ -44,6 +49,11 @@ export const createApp = () => {
   api.use('/inventory', inventoryRoutes);
   api.use('/billing', billingRoutes);
   api.use('/expenses', expenseRoutes);
+  api.use('/reports', reportRoutes);
+  api.use('/notifications', notificationRoutes);
+  api.use('/portal', portalRoutes);
+  api.use('/public', publicRoutes);
+  api.use('/admin', adminRoutes);
   app.use('/api/v1', api);
 
   app.use(notFoundHandler);

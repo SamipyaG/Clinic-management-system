@@ -4,11 +4,18 @@ import { Appointment } from '../models/Appointment.js';
 import { audit } from '../models/AuditLog.js';
 import { authenticate, authorize } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
-import { callNext, checkIn, completeVisit, getQueue } from '../services/queueService.js';
+import { callNext, checkIn, completeVisit, displayState, getQueue } from '../services/queueService.js';
+import { emitClinic, emitDisplay } from '../services/realtime.js';
 import { asyncHandler, notFound } from '../utils/errors.js';
 
 const router = Router();
 router.use(authenticate);
+
+/** Tell staff screens and the public display that a doctor's queue changed. */
+const broadcast = async (clinic, doctor) => {
+  emitClinic(clinic, 'queue:updated', { doctor: String(doctor) });
+  emitDisplay(clinic, 'queue:display', await displayState(clinic, doctor));
+};
 
 const checkInSchema = z.object({
   patient: z.string(),
@@ -31,6 +38,7 @@ router.post('/check-in', authorize('queue:create'), validate(checkInSchema), asy
   }
   const visit = await checkIn({ ...rest, appointment, clinic: req.user.clinic, source });
   audit(req, 'queue.check_in', 'Visit', visit.id, { source });
+  await broadcast(req.user.clinic, visit.doctor);
   res.status(201).json(visit);
 }));
 
@@ -41,6 +49,7 @@ router.get('/doctor/:doctorId', authorize('queue:read'), asyncHandler(async (req
 router.post('/doctor/:doctorId/call-next', authorize('queue:update'), asyncHandler(async (req, res) => {
   const visit = await callNext(req.user.clinic, req.params.doctorId);
   audit(req, 'queue.call_next', 'Visit', visit.id);
+  await broadcast(req.user.clinic, visit.doctor);
   res.json(visit);
 }));
 
@@ -50,6 +59,7 @@ router.post('/visits/:id/complete', authorize('queue:update'), asyncHandler(asyn
     await Appointment.updateOne({ _id: visit.appointment }, { status: 'completed' });
   }
   audit(req, 'queue.complete', 'Visit', visit.id);
+  await broadcast(req.user.clinic, visit.doctor);
   res.json(visit);
 }));
 

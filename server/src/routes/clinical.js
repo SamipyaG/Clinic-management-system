@@ -10,6 +10,7 @@ import { audit } from '../models/AuditLog.js';
 import { authenticate, authorize } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
 import { computeBmi, flagVitals } from '../services/vitals.js';
+import { scheduleFollowUp } from '../services/notifications.js';
 import { asyncHandler, forbidden, notFound } from '../utils/errors.js';
 
 const router = Router();
@@ -82,6 +83,7 @@ router.put('/visits/:visitId/consultation', authorize('consultation:write'), val
     { new: true, upsert: true, runValidators: true },
   );
   audit(req, 'consultation.save', 'Consultation', consultation.id);
+  if ('followUpDate' in req.body) await scheduleFollowUp(consultation);
   res.json(consultation);
 }));
 

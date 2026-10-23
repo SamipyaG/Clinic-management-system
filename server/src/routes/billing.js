@@ -7,7 +7,8 @@ import { audit } from '../models/AuditLog.js';
 import { authenticate, authorize } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
 import { addLines, nextNumber, refreshInvoice, syncVisitCharges } from '../services/invoicing.js';
-import { receiptHtml } from '../services/receipt.js';
+import { receiptHtml, money } from '../services/receipt.js';
+import { notifyPatient } from '../services/notifications.js';
 import { asyncHandler, badRequest, conflict, notFound } from '../utils/errors.js';
 
 const router = Router();
@@ -100,6 +101,7 @@ router.post('/invoices/:id/payments', authorize('payment:create'), validate(paym
   });
   const updated = await refreshInvoice(invoice._id);
   audit(req, 'payment.create', 'Payment', payment.id, { amount: payment.amount, method: payment.method });
+  await notifyPatient(req.user.clinic, invoice.patient, 'payment_received', { amount: money(payment.amount), receiptNo: payment.receiptNo }, String(payment._id));
   res.status(201).json({ payment, invoice: updated });
 }));
 

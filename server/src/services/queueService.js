@@ -43,6 +43,16 @@ export const getQueue = async (clinic, doctor, avgMinutes = DEFAULT_AVG_MINUTES)
   }));
 };
 
+/** What the public waiting-room screen may show: token numbers only, no patient details. */
+export const displayState = async (clinic, doctor) => {
+  const date = dateKey(new Date());
+  const [serving, waiting] = await Promise.all([
+    Visit.find({ clinic, doctor, date, status: 'in_consultation' }).select('token'),
+    getQueue(clinic, doctor),
+  ]);
+  return { doctor: String(doctor), serving: serving.map((v) => v.token), waiting: waiting.map((q) => q.visit.token) };
+};
+
 /** Call the next waiting patient for a doctor. */
 export const callNext = async (clinic, doctor) => {
   const [next] = await getQueue(clinic, doctor);

@@ -11,6 +11,8 @@ import {
   rescheduleAppointment,
 } from '../services/appointments.js';
 import { toMinutes } from '../utils/time.js';
+import { cancelPending, notifyAppointment, onAppointmentBooked, scheduleReminders } from '../services/notifications.js';
+import { emitClinic } from '../services/realtime.js';
 import { asyncHandler, notFound } from '../utils/errors.js';
 
 const router = Router();
@@ -53,10 +55,14 @@ router.post('/', authorize('appointment:create'), validate(bookSchema), asyncHan
   if (recurrence) {
     const result = await bookRecurring({ ...base, startDate: day, rule: recurrence });
     audit(req, 'appointment.create_series', 'Appointment', result.seriesId, { count: result.booked.length });
+    for (const a of result.booked) await onAppointmentBooked(a);
+    emitClinic(req.user.clinic, 'appointment:changed', { action: 'created', date: day });
     return res.status(201).json(result);
   }
   const appt = await bookAppointment({ ...base, date: day });
   audit(req, 'appointment.create', 'Appointment', appt.id);
+  await onAppointmentBooked(appt);
+  emitClinic(req.user.clinic, 'appointment:changed', { action: 'created', id: appt.id, date: day });
   res.status(201).json(appt);
 }));
 
@@ -70,6 +76,10 @@ router.post(
       startMinutes: toMinutes(req.body.time),
     });
     audit(req, 'appointment.reschedule', 'Appointment', appt.id, { from: req.params.id });
+    await cancelPending(req.params.id);
+    await notifyAppointment(appt, 'appointment_rescheduled');
+    await scheduleReminders(appt);
+    emitClinic(req.user.clinic, 'appointment:changed', { action: 'rescheduled', id: appt.id });
     res.json(appt);
   }),
 );
@@ -81,6 +91,9 @@ router.post(
   asyncHandler(async (req, res) => {
     const appt = await cancelAppointment(req.params.id, req.user.clinic, req.body.reason);
     audit(req, 'appointment.cancel', 'Appointment', appt.id);
+    await cancelPending(appt.id);
+    await notifyAppointment(appt, 'appointment_cancelled');
+    emitClinic(req.user.clinic, 'appointment:changed', { action: 'cancelled', id: appt.id });
     res.json(appt);
   }),
 );

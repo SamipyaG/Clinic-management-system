@@ -11,6 +11,7 @@ const clinicSchema = new mongoose.Schema(
     currency: { type: String, default: 'NPR' },
     taxPercent: { type: Number, default: 0 },
     holidays: [{ type: String }], // 'YYYY-MM-DD'
+    notificationChannels: { type: [String], enum: ['email', 'sms', 'whatsapp', 'in_app'], default: ['email', 'sms', 'in_app'] },
     workingHours: { start: { type: String, default: '09:00' }, end: { type: String, default: '17:00' } },
   },
   { timestamps: true },

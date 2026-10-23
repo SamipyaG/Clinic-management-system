@@ -10,6 +10,9 @@ export const errorHandler = (err, _req, res, _next) => {
   if (err?.code === 11000) {
     return res.status(409).json({ error: 'Duplicate value', details: err.keyValue });
   }
+  if (err?.name === 'ZodError') {
+    return res.status(400).json({ error: 'Validation failed', details: err.flatten().fieldErrors });
+  }
   if (err?.name === 'ValidationError' || err?.name === 'CastError') {
     return res.status(400).json({ error: err.message });
   }
