@@ -19,4 +19,4 @@ API base: `http://localhost:5000/api/v1`, health check: `/health`.
 
 ## Status
 
-Phases 1-2 done: auth + RBAC, patients, departments, doctors, appointments, queue, vitals, consultations, prescriptions, referrals and the lab workflow. See the phase table in the plan.
+Phases 1-3 done: auth + RBAC, patients, departments, doctors, appointments, queue, clinical workflow, lab, pharmacy (FEFO dispensing, expiry/stock alerts), inventory, invoices, payments, refunds, HTML receipts and expenses. See the phase table in the plan.

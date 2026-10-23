@@ -14,6 +14,10 @@ import appointmentRoutes from './routes/appointments.js';
 import queueRoutes from './routes/queue.js';
 import clinicalRoutes from './routes/clinical.js';
 import labRoutes from './routes/lab.js';
+import pharmacyRoutes from './routes/pharmacy.js';
+import inventoryRoutes from './routes/inventory.js';
+import billingRoutes from './routes/billing.js';
+import expenseRoutes from './routes/expenses.js';
 
 export const createApp = () => {
   const app = express();
@@ -36,6 +40,10 @@ export const createApp = () => {
   api.use('/queue', queueRoutes);
   api.use('/clinical', clinicalRoutes);
   api.use('/lab', labRoutes);
+  api.use('/pharmacy', pharmacyRoutes);
+  api.use('/inventory', inventoryRoutes);
+  api.use('/billing', billingRoutes);
+  api.use('/expenses', expenseRoutes);
   app.use('/api/v1', api);
 
   app.use(notFoundHandler);
