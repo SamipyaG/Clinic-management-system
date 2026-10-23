@@ -146,9 +146,9 @@ React + Vite + React Router + TanStack Query + Tailwind. One shell with role-awa
 
 | Phase | Scope | Status |
 |---|---|---|
-| 0 | Plan, repo, tooling | this commit |
-| 1 | Server foundation: config, auth, RBAC, tenant scoping, audit, error handling, core models, **scheduling, queue, billing and FEFO algorithms with tests**, patient/doctor/department/appointment/queue APIs | this commit |
-| 2 | Clinical: vitals, consultation, prescription, referral, follow-up, lab | next |
+| 0 | Plan, repo, tooling | done |
+| 1 | Server foundation: config, auth, RBAC, tenant scoping, audit, error handling, core models, **scheduling, queue, billing and FEFO algorithms with tests**, patient/doctor/department/appointment/queue APIs | done |
+| 2 | Clinical: vitals, consultation, prescription, referral, follow-up, lab | done |
 | 3 | Pharmacy, inventory, alerts, billing/payments/receipts (PDF, QR), expenses | |
 | 4 | Reports and dashboard, notifications and reminders, realtime | |
 | 5 | React client: reception, doctor, patient portals | |

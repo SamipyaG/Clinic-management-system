@@ -115,3 +115,24 @@ test('recurrence by count and until', () => {
   assert.deepEqual(expandRecurrence('2026-11-01', { everyDays: 14, until: '2026-11-30' }), ['2026-11-01', '2026-11-15', '2026-11-29']);
   assert.throws(() => expandRecurrence('2026-11-01', { everyDays: 7 }));
 });
+
+test('bmi and vitals flags', async () => {
+  const { computeBmi, flagVitals } = await import('../src/services/vitals.js');
+  assert.equal(computeBmi(70, 175), 22.9);
+  assert.equal(computeBmi(null, 175), undefined);
+  assert.deepEqual(
+    flagVitals({ bloodPressure: { systolic: 150, diastolic: 85 }, heartRate: 55, spo2: 97, temperature: 38.2 }),
+    { systolic: 'high', heartRate: 'low', temperature: 'high' },
+  );
+  assert.deepEqual(flagVitals({}), {});
+});
+
+test('age and lab order status', async () => {
+  const { ageInYears, deriveOrderStatus } = await import('../src/services/lab.js');
+  assert.equal(ageInYears(new Date('2000-06-15'), new Date('2026-06-14')), 25);
+  assert.equal(ageInYears(new Date('2000-06-15'), new Date('2026-06-15')), 26);
+  assert.equal(ageInYears(null), null);
+  assert.equal(deriveOrderStatus(['ordered', 'ordered']), 'ordered');
+  assert.equal(deriveOrderStatus(['resulted', 'ordered']), 'in_progress');
+  assert.equal(deriveOrderStatus(['resulted', 'resulted']), 'completed');
+});

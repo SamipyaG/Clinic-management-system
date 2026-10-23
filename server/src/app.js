@@ -12,6 +12,8 @@ import doctorRoutes from './routes/doctors.js';
 import patientRoutes from './routes/patients.js';
 import appointmentRoutes from './routes/appointments.js';
 import queueRoutes from './routes/queue.js';
+import clinicalRoutes from './routes/clinical.js';
+import labRoutes from './routes/lab.js';
 
 export const createApp = () => {
   const app = express();
@@ -32,6 +34,8 @@ export const createApp = () => {
   api.use('/patients', patientRoutes);
   api.use('/appointments', appointmentRoutes);
   api.use('/queue', queueRoutes);
+  api.use('/clinical', clinicalRoutes);
+  api.use('/lab', labRoutes);
   app.use('/api/v1', api);
 
   app.use(notFoundHandler);
