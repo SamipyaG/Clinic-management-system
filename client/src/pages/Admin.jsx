@@ -2,7 +2,9 @@ import { useState } from 'react';
 import { api } from '../api.js';
 import { useAction, useLoad } from '../hooks.js';
 import { fmtDateTime, label, toMinor } from '../format.js';
+import { useAuth } from '../auth.jsx';
 import { Badge, Card, ErrorMsg, Field, Loading, Table, Tabs, useFormState } from '../components/ui.jsx';
+import { Branches, Platform, SystemHealth } from '../components/SystemPanels.jsx';
 
 const ROLES = ['clinic_admin', 'receptionist', 'nurse', 'pharmacist', 'lab_staff', 'accountant'];
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -187,6 +189,8 @@ function Audit() {
 }
 
 export default function Admin() {
+  const { user } = useAuth();
+  const isSuper = user.role === 'super_admin';
   const [key, setKey] = useState(0);
   const depts = useLoad(() => api('/departments'), [key]);
   return (
@@ -198,6 +202,9 @@ export default function Admin() {
         { id: 'doc', title: 'Doctors', render: () => <Doctors departments={depts.data} /> },
         { id: 'set', title: 'Clinic settings', render: () => <Settings /> },
         { id: 'audit', title: 'Audit & notifications', render: () => <Audit /> },
+        { id: 'branches', title: 'Branches', render: () => <Branches /> },
+        { id: 'system', title: 'System health & backups', render: () => <SystemHealth isSuper={isSuper} /> },
+        ...(isSuper ? [{ id: 'platform', title: 'Organizations', render: () => <Platform /> }] : []),
       ]} />
     </div>
   );

@@ -23,6 +23,10 @@ import notificationRoutes from './routes/notifications.js';
 import portalRoutes from './routes/portal.js';
 import publicRoutes from './routes/public.js';
 import adminRoutes from './routes/users.js';
+import documentRoutes from './routes/documents.js';
+import lookupRoutes from './routes/lookup.js';
+import aiRoutes from './routes/ai.js';
+import platformRoutes from './routes/platform.js';
 
 export const createApp = () => {
   const app = express();
@@ -54,6 +58,10 @@ export const createApp = () => {
   api.use('/portal', portalRoutes);
   api.use('/public', publicRoutes);
   api.use('/admin', adminRoutes);
+  api.use('/documents', documentRoutes);
+  api.use('/lookup', lookupRoutes);
+  api.use('/ai', aiRoutes);
+  api.use('/platform', platformRoutes);
   app.use('/api/v1', api);
 
   app.use(notFoundHandler);

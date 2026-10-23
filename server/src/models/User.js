@@ -5,6 +5,7 @@ import { ROLES } from '../config/permissions.js';
 const userSchema = new mongoose.Schema(
   {
     clinic: { type: mongoose.Schema.Types.ObjectId, ref: 'Clinic', required: true, index: true },
+    organization: { type: mongoose.Schema.Types.ObjectId, ref: 'Organization' },
     name: { type: String, required: true, trim: true },
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     passwordHash: { type: String, required: true, select: false },

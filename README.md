@@ -12,7 +12,7 @@ cp .env.example .env        # set JWT_SECRET
 npm install
 ADMIN_PASSWORD='choose-a-password' npm run seed   # creates clinic + admin@clinic.local
 npm run dev
-npm test                    # algorithm unit tests (no DB needed)
+npm test                    # unit tests (no DB needed)
 ```
 
 API base: `http://localhost:5000/api/v1`, health check: `/health`.
@@ -32,4 +32,4 @@ The public waiting-room screen is at `/display/<clinicId>` (token numbers only, 
 
 ## Status
 
-Phases 1-5 done: the full server (see the plan) and a React web app with role-based screens for reception, nurses, doctors, lab, pharmacy, billing, reports, administration and the patient portal, plus the public queue display.
+All six phases are built: auth and roles, patients, doctors and scheduling, appointments and queue, clinical workflow, laboratory, pharmacy and inventory, billing, payments and receipts, expenses, reports, notifications and reminders, realtime updates, patient portal, documents, PDFs and QR codes, backups, system health, optional AI chart summaries and multi-clinic support, with a React web app on top. See docs/PLAN.md for design notes and limits.

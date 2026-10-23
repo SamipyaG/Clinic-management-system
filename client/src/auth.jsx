@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import { api, getToken, setToken } from './api.js';
+import { api, getToken, setActiveClinic, setToken } from './api.js';
 import { closeSocket } from './socket.js';
 
 const AuthContext = createContext(null);
@@ -19,6 +19,7 @@ export function AuthProvider({ children }) {
 
   const login = async (email, password) => {
     const r = await api('/auth/login', { method: 'POST', body: { email, password } });
+    setActiveClinic(null); // a new session always starts in the user's own clinic
     setToken(r.token);
     setUser(r.user);
     return r.user;
@@ -26,6 +27,7 @@ export function AuthProvider({ children }) {
 
   const logout = () => {
     setToken(null);
+    setActiveClinic(null);
     closeSocket();
     setUser(null);
   };

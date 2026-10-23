@@ -8,6 +8,8 @@ import { Prescription } from '../models/Prescription.js';
 import { LabOrder } from '../models/Lab.js';
 import { Invoice, Payment } from '../models/Billing.js';
 import { audit } from '../models/AuditLog.js';
+import { Document } from '../models/Document.js';
+import { sendDocument } from './documents.js';
 import { authenticate } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
 import { bookAppointment, cancelAppointment } from '../services/appointments.js';
@@ -83,6 +85,18 @@ router.get('/prescriptions', asyncHandler(async (req, res) => {
 // Only doctor-reviewed lab reports are visible to the patient.
 router.get('/lab-reports', asyncHandler(async (req, res) => {
   res.json(await LabOrder.find({ patient: req.patient._id, status: 'reviewed' }).sort('-createdAt').limit(50));
+}));
+
+// Only documents staff explicitly shared with the patient.
+router.get('/documents', asyncHandler(async (req, res) => {
+  res.json(await Document.find({ patient: req.patient._id, sharedWithPatient: true }).sort('-createdAt').select('-storageKey'));
+}));
+
+router.get('/documents/:id/download', asyncHandler(async (req, res) => {
+  const doc = await Document.findOne({ _id: req.params.id, patient: req.patient._id, sharedWithPatient: true });
+  if (!doc) throw notFound('Document not found');
+  audit(req, 'portal.document.download', 'Document', doc.id);
+  await sendDocument(res, doc);
 }));
 
 router.get('/history', asyncHandler(async (req, res) => {

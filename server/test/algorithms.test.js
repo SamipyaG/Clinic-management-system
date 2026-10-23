@@ -158,3 +158,55 @@ test('notification templates, channels, reminders, backoff', async () => {
   assert.equal(core.retryDelayMs(3), 240_000);
   assert.equal(core.retryDelayMs(30), 3_600_000);
 });
+
+test('file type detection uses content, not names', async () => {
+  const { detectFile, safeName } = await import('../src/services/files.js');
+  assert.equal(detectFile(Buffer.from('%PDF-1.7\n...')).mime, 'application/pdf');
+  assert.equal(detectFile(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0])).ext, 'png');
+  assert.equal(detectFile(Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0])).mime, 'image/jpeg');
+  assert.equal(detectFile(Buffer.from('RIFF\0\0\0\0WEBPVP8 ')).ext, 'webp');
+  assert.equal(detectFile(Buffer.from('plain note')).mime, 'text/plain');
+  assert.equal(detectFile(Buffer.from([0x4d, 0x5a, 0x90, 0x00, 0x03, 0x00])), null); // Windows executable
+  assert.equal(detectFile(Buffer.from('<?php echo 1;\0')), null);
+  assert.equal(detectFile(Buffer.alloc(0)), null);
+  assert.equal(safeName('../../etc/pass"wd.pdf'), 'passwd.pdf');
+  assert.equal(safeName('   '), 'document');
+  assert.equal(safeName('a'.repeat(300)).length, 120);
+});
+
+test('qr references encode and decode safely', async () => {
+  const { encodeRef, decodeRef, qrPng } = await import('../src/services/qr.js');
+  assert.equal(encodeRef('PAT', 'P-2611-00001'), 'CLN:PAT:P-2611-00001');
+  assert.deepEqual(decodeRef('CLN:RX:64f0a1b2c3d4e5f607182930'), { type: 'RX', ref: '64f0a1b2c3d4e5f607182930' });
+  assert.equal(decodeRef('CLN:HACK:1'), null);
+  assert.equal(decodeRef('CLN:PAT:../../etc'), null);
+  assert.equal(decodeRef('https://evil.example'), null);
+  assert.equal(decodeRef(undefined), null);
+  assert.throws(() => encodeRef('XXX', '1'));
+  const png = await qrPng('CLN:PAT:P-1');
+  assert.equal(png.subarray(1, 4).toString(), 'PNG');
+});
+
+test('rule-based patient summary highlights safety items first', async () => {
+  const { ruleSummary } = await import('../src/services/aiSummary.js');
+  const text = ruleSummary(
+    {
+      age: 34, gender: 'female', bloodGroup: 'O+', allergies: ['Penicillin'], conditions: ['Asthma'],
+      recentConsultations: [{ date: '2026-05-01', complaints: 'Cough', diagnosis: ['Bronchitis'], treatment: 'Rest', followUpDate: '2026-05-15' }],
+      latestVitals: [{ date: '2026-05-01', bloodPressure: { systolic: 150, diastolic: 95 }, heartRate: 80, flags: { systolic: 'high' } }],
+      recentPrescriptions: [{ date: '2026-05-01', items: ['Salbutamol 2 puffs PRN x 30d'] }],
+      recentLabs: [{ test: 'Hemoglobin', value: 6, unit: 'g/dL', flag: 'critical_low' }, { test: 'WBC', value: 7, flag: 'normal' }],
+      outstandingBalance: 500,
+    },
+    '2026-06-01',
+  );
+  const lines = text.split('\n');
+  assert.match(lines[0], /34-year-old female, blood group O\+/);
+  assert.match(lines[1], /^ALLERGIES: Penicillin/);
+  assert.match(text, /Follow-up was due on 2026-05-15 \(overdue\)/);
+  assert.match(text, /Outside normal range: systolic high/);
+  assert.match(text, /Hemoglobin 6 g\/dL \(critical low\)/);
+  assert.doesNotMatch(text, /WBC/);
+  assert.match(text, /outstanding balance/);
+  assert.match(ruleSummary({ age: null, gender: null, bloodGroup: null, allergies: [], conditions: [], recentConsultations: [], latestVitals: [], recentPrescriptions: [], recentLabs: [], outstandingBalance: 0 }), /No previous consultations/);
+});

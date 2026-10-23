@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { api } from '../api.js';
+import { api, getActiveClinic, setActiveClinic } from '../api.js';
 import { useAuth } from '../auth.jsx';
 import { ACCESS } from '../access.js';
 import { useLoad, useRealtime } from '../hooks.js';
@@ -20,6 +20,46 @@ const NAV = [
   { to: '/reports', text: 'Reports', area: 'reports' },
   { to: '/admin', text: 'Administration', area: 'admin' },
 ];
+
+/** Admins with more than one clinic can pick which one they are working in. */
+function ClinicSwitcher({ user }) {
+  const clinics = useLoad(() => (['clinic_admin', 'super_admin'].includes(user.role) ? api('/platform/clinics') : Promise.resolve([])));
+  if (!clinics.data || clinics.data.length < 2) return null;
+  const current = getActiveClinic() ?? user.clinic;
+  const change = (e) => {
+    setActiveClinic(e.target.value === user.clinic ? null : e.target.value);
+    window.location.assign('/'); // reload so every screen refetches for the chosen clinic
+  };
+  return (
+    <select value={current} onChange={change} aria-label="Active clinic" style={{ width: 'auto', maxWidth: 220 }}>
+      {clinics.data.map((c) => <option key={c._id} value={c._id}>{c.name}</option>)}
+    </select>
+  );
+}
+
+/** Paste or scan (a USB scanner types the code and presses Enter) a clinic QR code to jump to the record. */
+function CodeLookup() {
+  const navigate = useNavigate();
+  const [code, setCode] = useState('');
+  const [error, setError] = useState('');
+  const go = async (e) => {
+    e.preventDefault();
+    setError('');
+    try {
+      const r = await api(`/lookup/resolve?code=${encodeURIComponent(code.trim())}`);
+      setCode('');
+      navigate(r.path);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+  return (
+    <form onSubmit={go} className="row" role="search">
+      <input value={code} onChange={(e) => setCode(e.target.value)} placeholder="Scan QR code" aria-label="Scan or enter a QR code" style={{ width: 150 }} />
+      {error && <span className="error" role="alert">{error}</span>}
+    </form>
+  );
+}
 
 function Bell() {
   const [open, setOpen] = useState(false);
@@ -80,6 +120,8 @@ export default function Layout({ children }) {
           <button className="secondary menu-btn" onClick={() => setOpen((o) => !o)} aria-label="Menu">Menu</button>
           <span className="muted">{user.name} · {label(user.role)}</span>
           <div className="row">
+            {user.role !== 'patient' && ['clinic_admin', 'super_admin', 'receptionist', 'doctor', 'nurse', 'pharmacist', 'lab_staff'].includes(user.role) && <CodeLookup />}
+            <ClinicSwitcher user={user} />
             <Bell />
             <button className="secondary" onClick={() => { logout(); navigate('/login'); }}>Sign out</button>
           </div>

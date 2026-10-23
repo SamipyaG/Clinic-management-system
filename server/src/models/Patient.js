@@ -4,7 +4,7 @@ const patientSchema = new mongoose.Schema(
   {
     clinic: { type: mongoose.Schema.Types.ObjectId, ref: 'Clinic', required: true },
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // set when the patient has portal access
-    patientId: { type: String, required: true, unique: true }, // P-YYMM-00001
+    patientId: { type: String, required: true }, // P-YYMM-00001, unique within a clinic
     name: { type: String, required: true, trim: true },
     dob: Date,
     gender: { type: String, enum: ['male', 'female', 'other'] },
@@ -20,6 +20,7 @@ const patientSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
+patientSchema.index({ clinic: 1, patientId: 1 }, { unique: true });
 patientSchema.index({ clinic: 1, phone: 1 });
 patientSchema.index({ name: 'text', phone: 'text', patientId: 'text' });
 

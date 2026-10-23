@@ -15,7 +15,7 @@ const lineSchema = new mongoose.Schema({
 const invoiceSchema = new mongoose.Schema(
   {
     clinic: { type: ObjectId, ref: 'Clinic', required: true },
-    number: { type: String, required: true, unique: true }, // INV-YYMM-00001
+    number: { type: String, required: true }, // INV-YYMM-00001, unique within a clinic
     visit: { type: ObjectId, ref: 'Visit', required: true, unique: true },
     patient: { type: ObjectId, ref: 'Patient', required: true },
     lines: [lineSchema],
@@ -31,6 +31,7 @@ const invoiceSchema = new mongoose.Schema(
   },
   { timestamps: true },
 );
+invoiceSchema.index({ clinic: 1, number: 1 }, { unique: true });
 invoiceSchema.index({ clinic: 1, createdAt: -1 });
 invoiceSchema.index({ patient: 1, createdAt: -1 });
 export const Invoice = mongoose.model('Invoice', invoiceSchema);
@@ -39,7 +40,7 @@ const paymentSchema = new mongoose.Schema(
   {
     clinic: { type: ObjectId, ref: 'Clinic', required: true },
     invoice: { type: ObjectId, ref: 'Invoice', required: true },
-    receiptNo: { type: String, required: true, unique: true }, // RCP-YYMM-00001
+    receiptNo: { type: String, required: true }, // RCP-YYMM-00001, unique within a clinic
     kind: { type: String, enum: ['payment', 'refund'], default: 'payment' },
     method: { type: String, enum: ['cash', 'card', 'bank_transfer', 'online', 'wallet'], required: true },
     amount: { type: Number, required: true, min: 1 },
@@ -49,6 +50,7 @@ const paymentSchema = new mongoose.Schema(
   },
   { timestamps: true },
 );
+paymentSchema.index({ clinic: 1, receiptNo: 1 }, { unique: true });
 paymentSchema.index({ invoice: 1 });
 paymentSchema.index({ clinic: 1, createdAt: -1 });
 export const Payment = mongoose.model('Payment', paymentSchema);

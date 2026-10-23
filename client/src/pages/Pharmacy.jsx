@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { api } from '../api.js';
+import { api, openFile } from '../api.js';
 import { useAuth } from '../auth.jsx';
 import { useAction, useLoad } from '../hooks.js';
 import { fmtDate, money, toMinor } from '../format.js';
@@ -17,6 +17,7 @@ function DispenseForm({ rx, medicines, onDone }) {
     <>
       {rx.patient?.allergies?.length > 0 && <div className="alert">Allergies: {rx.patient.allergies.join(', ')}</div>}
       {rx.notes && <p className="muted">Doctor note: {rx.notes}</p>}
+      <button type="button" className="secondary small" onClick={() => openFile(`/clinical/prescriptions/${rx._id}/pdf`)}>Print prescription (PDF)</button>
       {lines.map((l, i) => (
         <div key={i} className="form-grid" style={{ borderBottom: '1px solid var(--line)', marginBottom: '.5rem' }}>
           <Field label="Prescribed" group><strong>{l.label}</strong></Field>

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { api, openHtml } from '../api.js';
+import { api, openFile, openHtml } from '../api.js';
 import { useAuth } from '../auth.jsx';
 import { useAction, useLoad } from '../hooks.js';
 import { fmtDate, fmtDateTime, label, money, toMinor, todayStr } from '../format.js';
@@ -37,7 +37,7 @@ function InvoiceDetail({ id, onChanged }) {
 
   return (
     <div className="stack">
-      <div className="row spread"><strong>{i.number} · {i.patient?.name}</strong><Badge value={i.status} /></div>
+      <div className="row spread"><strong>{i.number} · {i.patient?.name}</strong><div className="row"><button className="secondary small" onClick={() => openFile(`/billing/invoices/${id}/pdf`)}>Invoice PDF</button><Badge value={i.status} /></div></div>
       <Table rows={i.lines} empty="No charges yet." columns={[
         { h: 'Item', c: (l) => `${l.description} (${l.type})` }, { h: 'Qty', c: (l) => l.qty, right: true },
         { h: 'Price', c: (l) => money(l.unit), right: true }, { h: 'Total', c: (l) => money(l.total), right: true },
@@ -53,7 +53,7 @@ function InvoiceDetail({ id, onChanged }) {
         <Table rows={payments} empty="No payments yet." columns={[
           { h: 'Receipt', c: (p) => p.receiptNo }, { h: 'When', c: (p) => fmtDateTime(p.createdAt) }, { h: 'Method', c: (p) => label(p.method) },
           { h: 'Amount', c: (p) => <span className={p.kind === 'refund' ? 'error' : ''}>{p.kind === 'refund' ? '-' : ''}{money(p.amount)}</span>, right: true },
-          { h: '', c: (p) => <button className="secondary small" onClick={() => receipt.run(p._id)}>Receipt</button> },
+          { h: '', c: (p) => <div className="row"><button className="secondary small" onClick={() => receipt.run(p._id)}>Receipt</button><button className="secondary small" onClick={() => openFile(`/billing/payments/${p._id}/receipt?format=pdf`)}>PDF</button></div> },
         ]} />
         <ErrorMsg error={receipt.error} />
         <form onSubmit={addPayment.run} style={{ marginTop: '.75rem' }}>

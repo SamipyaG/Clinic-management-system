@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { api } from '../api.js';
+import { api, downloadFile } from '../api.js';
 import { useAuth } from '../auth.jsx';
 import { useAction, useLoad, useRealtime } from '../hooks.js';
 import { fmtDate, fmtDateTime, label, money, todayStr } from '../format.js';
@@ -35,6 +35,8 @@ export default function Portal() {
   const labs = useLoad(() => api('/portal/lab-reports'));
   const bills = useLoad(() => api('/portal/invoices'));
   const history = useLoad(() => api('/portal/history'));
+  const docs = useLoad(() => api('/portal/documents'));
+  const getDoc = useAction((d) => downloadFile(`/portal/documents/${d._id}/download`, d.name));
   const timeline = useLoad(() => api('/portal/timeline'));
   useRealtime(['notification:new'], () => { appts.reload(); labs.reload(); bills.reload(); });
 
@@ -90,6 +92,12 @@ export default function Portal() {
             <Card title="Invoices"><Table rows={bills.data?.invoices} empty="No invoices." columns={[{ h: 'Invoice', c: (i) => i.number }, { h: 'Date', c: (i) => fmtDate(i.createdAt) }, { h: 'Total', c: (i) => money(i.total), right: true }, { h: 'Balance', c: (i) => money(i.balance), right: true }, { h: 'Status', c: (i) => <Badge value={i.status} /> }]} /></Card>
             <Card title="Payments"><Table rows={bills.data?.payments} empty="No payments." columns={[{ h: 'Receipt', c: (p) => p.receiptNo }, { h: 'Date', c: (p) => fmtDate(p.createdAt) }, { h: 'Method', c: (p) => label(p.method) }, { h: 'Amount', c: (p) => money(p.amount), right: true }]} /></Card>
           </div>
+        ) },
+        { id: 'docs', title: 'Documents', render: () => (
+          <Card title="Documents shared with you">
+            <ErrorMsg error={getDoc.error} />
+            <Table rows={docs.data} empty="Nothing has been shared with you yet." columns={[{ h: 'Name', c: (d) => d.name }, { h: 'Type', c: (d) => label(d.kind) }, { h: 'Date', c: (d) => fmtDate(d.createdAt) }, { h: '', c: (d) => <button className="secondary small" onClick={() => getDoc.run(d)}>Download</button> }]} />
+          </Card>
         ) },
         { id: 'hist', title: 'Medical history', render: () => (
           <div className="stack">

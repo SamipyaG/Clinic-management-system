@@ -152,8 +152,15 @@ React + Vite + React Router + TanStack Query + Tailwind. One shell with role-awa
 | 3 | Pharmacy, inventory, alerts, billing/payments/receipts (PDF, QR), expenses | done |
 | 4 | Reports and dashboard, notifications and reminders, realtime (+ patient portal API, admin/audit/settings) | done |
 | 5 | React client: reception, doctor, patient portals | done |
-| 6 | Documents, backups, health monitoring, AI summary, polish | |
+| 6 | Documents, backups, health monitoring, AI summary, polish | done |
 
 ## 8. Testing
 
 `node:test` unit tests for the pure algorithm modules (slots, queue, billing, FEFO, lab flags), which have no DB dependency. Integration tests with `mongodb-memory-server` from Phase 2.
+
+## 9. Operations notes
+
+- **Backups:** one gzip file of JSON lines holding every collection and every uploaded file, taken daily after `BACKUP_HOUR` (14 kept) or on demand by a platform admin. Restore into an empty database with `node src/restore.js <file>`, then start the server so indexes are rebuilt. Backups and uploads contain patient data: store them encrypted and off the web server.
+- **Multi-clinic:** every record carries its clinic. Admins switch branch with the `X-Clinic-Id` header (platform admin: any clinic; clinic admin: clinics of their organization). Patient IDs, invoice and receipt numbers are unique per clinic.
+- **AI summaries:** assistive only. The default is a local rule-based summary. The optional AI provider receives a de-identified chart summary and falls back to the local one on failure. Each use is audited.
+- **Known limits:** PDFs need `PDF_FONT` for non-Latin scripts; realtime events follow the user's home clinic, not a switched branch; the scheduler runs inside the API process (run one instance, or move jobs to a worker before scaling out).

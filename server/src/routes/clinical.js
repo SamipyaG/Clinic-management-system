@@ -11,6 +11,8 @@ import { authenticate, authorize } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
 import { computeBmi, flagVitals } from '../services/vitals.js';
 import { scheduleFollowUp } from '../services/notifications.js';
+import { Clinic } from '../models/Clinic.js';
+import { prescriptionPdf } from '../services/pdf.js';
 import { asyncHandler, forbidden, notFound } from '../utils/errors.js';
 
 const router = Router();
@@ -145,6 +147,16 @@ router.get('/prescriptions/:id', authorize('prescription:read'), asyncHandler(as
     .populate({ path: 'doctor', populate: { path: 'user', select: 'name' } });
   if (!rx) throw notFound('Prescription not found');
   res.json(rx);
+}));
+
+router.get('/prescriptions/:id/pdf', authorize('prescription:read'), asyncHandler(async (req, res) => {
+  const rx = await Prescription.findOne({ _id: req.params.id, clinic: req.user.clinic })
+    .populate('patient', 'name patientId allergies')
+    .populate({ path: 'doctor', populate: { path: 'user', select: 'name' } });
+  if (!rx) throw notFound('Prescription not found');
+  const clinic = await Clinic.findById(req.user.clinic);
+  res.type('pdf').set('Content-Disposition', `inline; filename="prescription-${rx.id}.pdf"`);
+  res.send(await prescriptionPdf({ clinic, prescription: rx }));
 }));
 
 router.post('/prescriptions/:id/cancel', authorize('prescription:write'), asyncHandler(async (req, res) => {

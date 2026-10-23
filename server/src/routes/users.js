@@ -31,7 +31,7 @@ router.post('/users', authorize('user:manage'), validate(userSchema), asyncHandl
   const { password, ...rest } = req.body;
   // Doctors need schedule/department data, so they are created through /doctors.
   if (rest.role === 'doctor') throw conflict('Create doctors through POST /doctors');
-  const user = await User.create({ ...rest, clinic: req.user.clinic, passwordHash: await User.hashPassword(password) });
+  const user = await User.create({ ...rest, clinic: req.user.clinic, organization: req.user.organization, passwordHash: await User.hashPassword(password) });
   audit(req, 'user.create', 'User', user.id, { role: user.role });
   res.status(201).json(user);
 }));

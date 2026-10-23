@@ -1,5 +1,8 @@
 import { useParams } from 'react-router-dom';
-import { api } from '../api.js';
+import { api, openFile } from '../api.js';
+import Documents from '../components/Documents.jsx';
+import AiSummary from '../components/AiSummary.jsx';
+import PatientQr from '../components/PatientQr.jsx';
 import { useAuth } from '../auth.jsx';
 import { useAction, useLoad } from '../hooks.js';
 import { fmtDateTime, fmtDate, label } from '../format.js';
@@ -65,9 +68,10 @@ export default function PatientDetail() {
         <Table rows={consults.data} empty="No consultations." columns={[{ h: 'Date', c: (c) => fmtDate(c.createdAt) }, { h: 'Complaint', c: (c) => c.chiefComplaints ?? '' }, { h: 'Diagnosis', c: (c) => (c.diagnosis ?? []).join(', ') }, { h: 'Follow-up', c: (c) => c.followUpDate ?? '' }]} />
       ) },
       { id: 'rx', title: 'Prescriptions', render: () => (
-        <Table rows={rx.data} empty="No prescriptions." columns={[{ h: 'Date', c: (r) => fmtDate(r.createdAt) }, { h: 'Medicines', c: (r) => r.items.map((i) => `${i.medicine} ${i.dosage} ${i.frequency} x ${i.duration}`).join('; ') }, { h: 'Status', c: (r) => <Badge value={r.status} /> }]} />
+        <Table rows={rx.data} empty="No prescriptions." columns={[{ h: 'Date', c: (r) => fmtDate(r.createdAt) }, { h: 'Medicines', c: (r) => r.items.map((i) => `${i.medicine} ${i.dosage} ${i.frequency} x ${i.duration}`).join('; ') }, { h: 'Status', c: (r) => <Badge value={r.status} /> }, { h: '', c: (r) => <button className="secondary small" onClick={() => openFile(`/clinical/prescriptions/${r._id}/pdf`)}>PDF</button> }]} />
       ) },
     ] : []),
+    ...(['doctor', 'nurse', 'receptionist', 'clinic_admin', 'super_admin'].includes(user.role) ? [{ id: 'docs', title: 'Documents', render: () => <Documents patientId={id} canWrite={['doctor', 'receptionist', 'clinic_admin', 'super_admin'].includes(user.role)} canDelete={['clinic_admin', 'super_admin'].includes(user.role)} /> }] : []),
   ];
 
   return (
@@ -88,6 +92,10 @@ export default function PatientDetail() {
           {x.allergies?.length ? <div className="alert">Allergies: {x.allergies.join(', ')}</div> : <p className="muted">No known allergies.</p>}
           <p>History: {x.medicalHistory?.length ? x.medicalHistory.join(', ') : '-'}</p>
         </Card>
+      </div>
+      <div className="grid cols-2" style={{ alignItems: 'start' }}>
+        {['doctor', 'nurse', 'clinic_admin', 'super_admin'].includes(user.role) && <AiSummary patientId={id} />}
+        <PatientQr patientId={id} name={x.name} />
       </div>
       <Card><Tabs tabs={tabs} /></Card>
     </div>

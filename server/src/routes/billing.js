@@ -8,6 +8,7 @@ import { authenticate, authorize } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
 import { addLines, nextNumber, refreshInvoice, syncVisitCharges } from '../services/invoicing.js';
 import { receiptHtml, money } from '../services/receipt.js';
+import { invoicePdf, receiptPdf } from '../services/pdf.js';
 import { notifyPatient } from '../services/notifications.js';
 import { asyncHandler, badRequest, conflict, notFound } from '../utils/errors.js';
 
@@ -81,6 +82,14 @@ router.put('/invoices/:id/discount', authorize('billing:discount'), validate(dis
   res.json(await refreshInvoice(invoice._id));
 }));
 
+router.get('/invoices/:id/pdf', authorize('billing:read'), asyncHandler(async (req, res) => {
+  const invoice = await Invoice.findOne({ _id: req.params.id, clinic: req.user.clinic }).populate('patient', 'name patientId');
+  if (!invoice) throw notFound('Invoice not found');
+  const [clinic, payments] = await Promise.all([Clinic.findById(req.user.clinic), Payment.find({ invoice: invoice._id }).sort('createdAt')]);
+  res.type('pdf').set('Content-Disposition', `inline; filename="${invoice.number}.pdf"`);
+  res.send(await invoicePdf({ clinic, invoice, payments }));
+}));
+
 // ---------- Payments ----------
 const paymentSchema = z.object({
   method: z.enum(['cash', 'card', 'bank_transfer', 'online', 'wallet']),
@@ -128,6 +137,10 @@ router.get('/payments/:id/receipt', authorize('billing:read'), asyncHandler(asyn
   const invoice = await Invoice.findById(payment.invoice).populate('patient', 'name patientId phone');
   const clinic = await Clinic.findById(req.user.clinic);
 
+  if (req.query.format === 'pdf') {
+    res.type('pdf').set('Content-Disposition', `inline; filename="${payment.receiptNo}.pdf"`);
+    return res.send(await receiptPdf({ clinic, invoice, payment }));
+  }
   if (req.query.format === 'html') return res.type('html').send(receiptHtml({ clinic, invoice, payment }));
   res.json({ clinic: { name: clinic.name, address: clinic.address, phone: clinic.phone, currency: clinic.currency }, invoice, payment });
 }));
