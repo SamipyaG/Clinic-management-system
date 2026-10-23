@@ -47,6 +47,13 @@ router.get('/', authorize('doctor:read'), asyncHandler(async (req, res) => {
   res.json(await Doctor.find(filter).populate('user', 'name email').populate('department', 'name'));
 }));
 
+/** The signed-in doctor's own profile (id needed for queue and consultation screens). */
+router.get('/me', asyncHandler(async (req, res) => {
+  const doctor = await Doctor.findOne({ user: req.user.id, clinic: req.user.clinic }).populate('department', 'name');
+  if (!doctor) throw notFound('No doctor profile for this account');
+  res.json(doctor);
+}));
+
 router.post('/', authorize('doctor:create'), validate(createSchema), asyncHandler(async (req, res) => {
   const { name, email, password, ...profile } = req.body;
   const user = await User.create({

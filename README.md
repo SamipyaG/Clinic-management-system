@@ -17,6 +17,19 @@ npm test                    # algorithm unit tests (no DB needed)
 
 API base: `http://localhost:5000/api/v1`, health check: `/health`.
 
+## Run the web app
+
+```bash
+cd client
+npm install
+npm run dev      # http://localhost:5173, proxies /api and /socket.io to the server on :5000
+npm run build    # production bundle in client/dist
+```
+
+Sign in as the seeded admin, then create departments, doctors and staff under **Administration**.
+Staff see only the areas their role allows. Patients get a portal login from their patient page.
+The public waiting-room screen is at `/display/<clinicId>` (token numbers only, no sign-in).
+
 ## Status
 
-Phases 1-4 done: auth + RBAC, patients, departments, doctors, appointments, queue, clinical workflow, lab, pharmacy, inventory, billing, payments, expenses, dashboard and financial/performance reports, notifications with automatic reminders, realtime updates (Socket.IO), patient portal API, staff/clinic settings and audit trail. See the phase table in the plan.
+Phases 1-5 done: the full server (see the plan) and a React web app with role-based screens for reception, nurses, doctors, lab, pharmacy, billing, reports, administration and the patient portal, plus the public queue display.

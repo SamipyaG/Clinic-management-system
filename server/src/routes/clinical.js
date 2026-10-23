@@ -129,6 +129,12 @@ router.post('/visits/:visitId/prescriptions', authorize('prescription:write'), v
   res.status(201).json(rx);
 }));
 
+/** Work list for the pharmacy: prescriptions waiting to be dispensed. */
+router.get('/prescriptions', authorize('prescription:read'), asyncHandler(async (req, res) => {
+  const filter = { clinic: req.user.clinic, status: req.query.status ?? 'issued' };
+  res.json(await Prescription.find(filter).sort('createdAt').limit(100).populate('patient', 'name patientId allergies'));
+}));
+
 router.get('/patients/:patientId/prescriptions', authorize('prescription:read'), asyncHandler(async (req, res) => {
   res.json(await Prescription.find({ clinic: req.user.clinic, patient: req.params.patientId }).sort('-createdAt').limit(50));
 }));

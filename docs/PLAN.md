@@ -151,7 +151,7 @@ React + Vite + React Router + TanStack Query + Tailwind. One shell with role-awa
 | 2 | Clinical: vitals, consultation, prescription, referral, follow-up, lab | done |
 | 3 | Pharmacy, inventory, alerts, billing/payments/receipts (PDF, QR), expenses | done |
 | 4 | Reports and dashboard, notifications and reminders, realtime (+ patient portal API, admin/audit/settings) | done |
-| 5 | React client: reception, doctor, patient portals | |
+| 5 | React client: reception, doctor, patient portals | done |
 | 6 | Documents, backups, health monitoring, AI summary, polish | |
 
 ## 8. Testing
