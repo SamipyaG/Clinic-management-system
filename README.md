@@ -1,5 +1,7 @@
 # Clinic Management System
 
+This is the system to solve the problem for all the clinics in Nepal.
+
 MERN clinic platform: patients, doctors, scheduling, queue, consultations, lab, pharmacy, billing and reports.
 
 - Design, data model and algorithms: [docs/PLAN.md](docs/PLAN.md)
